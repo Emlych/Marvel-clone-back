@@ -8,8 +8,12 @@ const apiUrl = "https://lereacteur-marvel-api.herokuapp.com";
 router.get("/characters", async (req, res) => {
   console.log("route : /characters");
   try {
+    const limit = req.query.limit;
+    const skip = req.query.skip;
+    const name = req.query.name;
+    console.log("limit:", limit);
     const response = await axios.get(
-      `${apiUrl}/characters?apiKey=${process.env.API_KEY}&limit=20`
+      `${apiUrl}/characters?apiKey=${process.env.API_KEY}&limit=${limit}&skip=${skip}&name=${name}`
     );
     res.json(response.data);
   } catch (error) {
