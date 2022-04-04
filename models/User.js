@@ -6,6 +6,10 @@ const User = mongoose.model("User", {
   token: String,
   hash: String,
   salt: String,
+  favorites: {
+    favComics: Array,
+    favCharacters: Array,
+  },
 });
 
 module.exports = User;

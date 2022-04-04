@@ -1,13 +1,12 @@
 const mongoose = require("mongoose");
 
 const Favorite = mongoose.model("Favorite", {
-  id: { type: String, required: true },
+  comicId: { type: String, required: true },
   title: { type: String, required: true },
+  description: String,
+  img_url: String,
   favType: { type: String, required: true },
-  owner: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "User",
-  },
+  userId: { required: true, type: String },
 });
 
 module.exports = Favorite;
