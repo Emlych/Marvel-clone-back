@@ -77,8 +77,6 @@ router.post("/favorites/handle", isAuthenticated, async (req, res) => {
       // -> step 2.1 : remove item's _id from inside userFavComics array.
       // -> step 2.2 : delete corresponding Favorite document for this comic
       else {
-        console.log("Add this new favorite to comic list");
-
         //Step 2.1
         targetUserFavComics.splice(
           targetUserFavComics.indexOf(req.fields.item._id)
@@ -139,6 +137,33 @@ router.post("/favorites/handle", isAuthenticated, async (req, res) => {
         console.log("new favorite character saved : ", newFavorite);
         //Send confirmation message : Favorite added.
         res.json({ message: "Favorite character added." });
+      }
+
+      //Case 2 : favorite exists
+      // -> step 2.1 : remove item's _id from inside userFavComics array.
+      // -> step 2.2 : delete corresponding Favorite document for this comic
+      else {
+        console.log("Remove this favorite from character list");
+
+        //Step 2.1
+        targetUserFavCharacters.splice(
+          targetUserFavCharacters.indexOf(req.fields.item._id)
+        );
+        await targetUser.save();
+        console.log(
+          "Character id removed from target favCharacters : ",
+          targetUserFavCharacters.includes(req.fields.item._id)
+        );
+
+        //Step 2.2
+        await Favorite.deleteOne({
+          comicId: req.fields.item._id,
+          userId: targetUser.id,
+        });
+        console.log("Favorite deleted, go check in Favorite Page.");
+
+        //Send confirmation message : Favorite deleted.
+        res.json({ message: "Favorite deleted." });
       }
     }
   } catch (error) {

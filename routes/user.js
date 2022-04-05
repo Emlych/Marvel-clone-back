@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
-
 const User = require("../models/User");
+const superheroes = require("superheroes");
 
 //Password management
 const SHA256 = require("crypto-js/sha256");
@@ -52,6 +52,18 @@ router.post("/user/signup", async (req, res) => {
     }
   } catch (error) {
     res.status(400).json(error.message);
+  }
+});
+
+//Generate a random superhero name
+router.get("/user/signup/username", async (req, res) => {
+  console.log("route : /user/signup/username");
+  try {
+    const randomUsername = superheroes.random();
+    console.log("generate random name : ", randomUsername);
+    res.json({ randomUsername: randomUsername });
+  } catch (error) {
+    res.status(400).json({ message: error.message });
   }
 });
 

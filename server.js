@@ -9,7 +9,7 @@ app.use(formidable());
 const cors = require("cors");
 app.use(cors());
 
-//Import et liiaison bdd
+//Import et liaison bdd
 const mongoose = require("mongoose");
 mongoose.connect("mongodb://localhost/marvel" || process.env.MONGODB_URI);
 
