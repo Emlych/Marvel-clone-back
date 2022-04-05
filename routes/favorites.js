@@ -70,7 +70,7 @@ router.post("/favorites/handle", isAuthenticated, async (req, res) => {
         await newFavorite.save();
 
         //Send confirmation message : Favorite added.
-        res.json({ message: "Favorite added." });
+        res.json({ message: "Favorite comic added." });
       }
 
       //Case 2 : favorite exists
@@ -106,31 +106,66 @@ router.post("/favorites/handle", isAuthenticated, async (req, res) => {
       const targetUserFavCharacters = targetUser.favorites.favCharacters;
       console.log("character id in item : ", req.fields.item._id);
       console.log("target user favorite character : ", targetUserFavCharacters);
+
+      //Case 1 : favorite doesn't exist
+      // -> step 1.1 : push item's _id inside userFavCharacters array.
+      // -> step 1.2 : create a new Favorite document for this character
+      // !! -> key of comicId. have to change name later.
+      if (!targetUserFavCharacters.includes(req.fields.item._id)) {
+        console.log("Add this new favorite to comic list");
+
+        //Step 1.1
+        targetUserFavCharacters.push(req.fields.item._id);
+        await targetUser.save();
+        console.log(
+          "target User registered ? ",
+          targetUserFavCharacters.includes(req.fields.item._id)
+        );
+
+        //Step 1.2
+        const newFavorite = new Favorite({
+          comicId: req.fields.item._id,
+          title: req.fields.item.name,
+          description: req.fields.item.description,
+          img_url:
+            req.fields.item.thumbnail.path +
+            "." +
+            req.fields.item.thumbnail.extension,
+          favType: "character",
+          userId: targetUser.id,
+        });
+        //console.log("favorite character to save : ", newFavorite);
+        await newFavorite.save();
+        console.log("new favorite character saved : ", newFavorite);
+        //Send confirmation message : Favorite added.
+        res.json({ message: "Favorite character added." });
+      }
     }
   } catch (error) {
     res.status(400).json({ error: error.message });
   }
 });
 
-//Read favorite comics
+//Read favorite comics and characters
 router.get("/favorites/read", async (req, res) => {
   console.log("route: /favorites/read");
   const tokenUser = req.headers.authorization.replace("Bearer ", "");
   try {
     const targetUser = await User.findOne({ token: tokenUser });
-    // console.log("target user : ", targetUser);
     //valueOf(): returns value of id as a lowercase hexadecimal string
     const userId = targetUser._id.valueOf();
-    const targetUserFavorites = await Favorite.find({
+    const targetUserComics = await Favorite.find({
       favType: "comic",
       userId: userId,
     });
-    // console.log("target user fav : ", targetUserFavorites);
-    // const targetUserFavorites = targetUser.favorites;
-    // console.log("target user favorites : ", targetUserFavorites);
+    const targetUserCharacters = await Favorite.find({
+      favType: "character",
+      userId: userId,
+    });
     res.json({
       message: "favorites have been loaded",
-      favComics: targetUserFavorites,
+      favComics: targetUserComics,
+      favCharacters: targetUserCharacters,
     });
   } catch (error) {
     res.status(400).json(error.message);
@@ -145,9 +180,18 @@ router.post("/favorites/remove", isAuthenticated, async (req, res) => {
 
   try {
     //Delete comic Id from target User
-    targetUser.favorites.favComics.splice(
-      targetUser.favorites.favComics.indexOf(req.fields.item.comicId)
-    );
+    //If it is a comic delete comic Id from target User favComics. If not delete it from favCharacters.
+    if (targetUser.favorites.favComics.includes(req.fields.item.comicId)) {
+      targetUser.favorites.favComics.splice(
+        targetUser.favorites.favComics.indexOf(req.fields.item.comicId)
+      );
+    } else if (
+      targetUser.favorites.favCharacters.includes(req.fields.item.comicId)
+    ) {
+      targetUser.favorites.favCharacters.splice(
+        targetUser.favorites.favCharacters.indexOf(req.fields.item.comicId)
+      );
+    }
     await targetUser.save();
 
     //Delete favorite Document with corresponding userId and comicId
